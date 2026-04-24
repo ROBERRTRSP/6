@@ -1,11 +1,10 @@
 {
-  "buildCommand": "cd 6/client && npm run build",
+  "buildCommand": "cd 6 && npm run build",
   "outputDirectory": "6/client/dist",
-  "installCommand": "cd 6/client && npm install",
-  "framework": "vite",
+  "installCommand": "cd 6 && npm install",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

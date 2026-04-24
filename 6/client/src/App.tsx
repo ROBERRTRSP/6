@@ -306,7 +306,11 @@ function AdminPanel({ onClose, onStartPlayer }: { onClose: () => void; onStartPl
       await load();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "No autorizado";
-      setError(msg === "API no disponible" ? "Backend no conectado. Configura VITE_API_BASE para usar el admin online." : msg);
+      setError(
+        msg === "API no disponible"
+          ? "Backend no conectado. Si el frontend está en otro dominio que la API, define VITE_API_BASE con la URL del servidor (sin /api al final)."
+          : msg
+      );
     }
   }
 
