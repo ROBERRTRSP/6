@@ -15,6 +15,10 @@ function apiUrl(path: string): string {
 }
 
 async function json<T>(res: Response): Promise<T> {
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error("API no disponible");
+  }
   const body = (await res.json().catch(() => ({}))) as T & { error?: string };
   if (!res.ok) throw new Error(body.error ?? "Error de servidor");
   return body;

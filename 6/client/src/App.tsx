@@ -43,6 +43,39 @@ const QUICK = [100, 500, 1000, 2000] as const;
 const EMPTY_BETS: BetsCents = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
 const SAVED_BETS_KEY = "lucky-six.current-bets";
 
+const DEFAULT_SETTINGS: PublicGameConfig = {
+  creditValueCents: 100,
+  jackpotSeedCents: 50000,
+  jackpotPoolCents: 50000,
+  jackpotContributionPercent: 3,
+  houseMarginPercent: 12,
+  prizeFundPercent: 85,
+  soundVolume: 85,
+  brightness: 100,
+  cooldownMs: 900,
+  demoMode: true,
+  maintenanceMode: false,
+  rtpMode: "normal",
+  minStakeCents: 100,
+  maxStakeCents: 10000000,
+  maxBetPerFaceCents: 50000,
+  balanceCents: 0,
+  activePlayer: null,
+  now: Date.now(),
+};
+
+const DEFAULT_STATS: AdminStats = {
+  creditsSoldToday: 0,
+  totalWageredToday: 0,
+  totalPaidToday: 0,
+  netToday: 0,
+  playsToday: 0,
+  jackpotPoolCents: 50000,
+  lastJackpotWinner: null,
+  freeGamesToday: 0,
+  jackpotHitsToday: 0,
+};
+
 function readSavedBets(): BetsCents {
   if (typeof window === "undefined") return { ...EMPTY_BETS };
   try {
@@ -886,11 +919,21 @@ export function App() {
   );
 
   const refresh = useCallback(async () => {
-    const [cfg, st, hist] = await Promise.all([fetchSettings(), fetchStats(), fetchHistory(12)]);
+    const [cfgResult, statsResult, historyResult] = await Promise.allSettled([
+      fetchSettings(),
+      fetchStats(),
+      fetchHistory(12),
+    ]);
+
+    const cfg = cfgResult.status === "fulfilled" ? cfgResult.value : DEFAULT_SETTINGS;
     setSettings(cfg);
     setActivePlayer(cfg.activePlayer);
-    setStats(st);
-    setHistory(hist.plays);
+    setStats(statsResult.status === "fulfilled" ? statsResult.value : DEFAULT_STATS);
+    setHistory(historyResult.status === "fulfilled" ? historyResult.value.plays : []);
+
+    if (cfgResult.status === "rejected") {
+      setBanner("API no disponible en este despliegue. Conecta el backend para jugar en vivo.");
+    }
   }, []);
 
   useEffect(() => {
