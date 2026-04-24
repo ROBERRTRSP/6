@@ -1,7 +1,6 @@
 {
-  "buildCommand": "cd 6 && npm run build",
-  "outputDirectory": "6/client/dist",
   "installCommand": "cd 6 && npm install",
+  "buildCommand": "cd 6 && npm run build && if [ -n \"$VERCEL\" ] && [ \"$VERCEL_ENV\" != \"development\" ] && [ -n \"$VERCEL_URL\" ]; then cd .. && rm -rf public && mkdir -p public && cp -r 6/client/dist/* public/; fi",
   "rewrites": [
     {
       "source": "/((?!api/).*)",

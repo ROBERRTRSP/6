@@ -8,14 +8,15 @@ This repository is a Vite React frontend plus a Node/Express backend.
 - Backend: Node/Express runtime using local SQLite through `better-sqlite3`.
 - Database target: Neon PostgreSQL schema is prepared in `neon/schema.sql`, but the runtime data adapter still needs migration from SQLite to PostgreSQL before Neon can be the live production database.
 
-## Vercel Frontend
+## Vercel (Express + Vite en el mismo dominio)
 
-Use these Vercel settings:
+En el repo que despliega desde la **raíz** (monorepo con carpeta `6/`):
 
-- Framework Preset: `Vite`
-- Install Command: `npm install`
-- Build Command: `npm run build -w client`
-- Output Directory: `client/dist`
+- **No uses** “Output Directory” solo para Vite: eso despliega solo estáticos y **`/api/*` devuelve 404** (Express no se registra).
+- El `vercel.json` en la raíz del repo ejecuta el build dentro de `6/`, copia `6/client/dist` → **`public/`** en la raíz (requerido por [Express on Vercel](https://vercel.com/docs/frameworks/backend/express)) y expone la app desde **`src/index.ts`** en esa raíz.
+- **Root Directory** en Vercel puede ser la raíz del repo, o bien **`6`**: si es **`6`**, usa solo el `vercel.json` dentro de `6/` (también sin `outputDirectory`, con `public/` generado ahí).
+
+Variables de entorno en el proyecto (Production / Preview): `NODE_ENV`, `ADMIN_PASSWORD`, `SESSION_SECRET`, etc.
 
 Required Vercel frontend variable when the API is not hosted on the same origin:
 
