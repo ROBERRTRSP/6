@@ -12,6 +12,7 @@ This repository is a Vite React frontend plus a Node/Express backend.
 
 En el repo que despliega desde la **raíz** (monorepo con carpeta `6/`):
 
+- El `package.json` en la **raíz del repo** debe declarar `workspaces: ["6/client", "6/server"]` y un script `build` que ejecute ambos paquetes; si solo existe un `package.json` roto en la raíz (workspaces `client`/`server` sin carpetas), Vercel **no instala Express** y **`/api/*` devuelve 404**.
 - **No uses** “Output Directory” solo para Vite: eso despliega solo estáticos y **`/api/*` devuelve 404** (Express no se registra).
 - El `vercel.json` en la raíz del repo ejecuta el build dentro de `6/`, copia `6/client/dist` → **`public/`** en la raíz (requerido por [Express on Vercel](https://vercel.com/docs/frameworks/backend/express)) y expone la app desde **`src/index.ts`** en esa raíz.
 - **Root Directory** en Vercel puede ser la raíz del repo, o bien **`6`**: si es **`6`**, usa solo el `vercel.json` dentro de `6/` (también sin `outputDirectory`, con `public/` generado ahí).
