@@ -937,7 +937,16 @@ export function App() {
     setHistory(historyResult.status === "fulfilled" ? historyResult.value.plays : []);
 
     if (cfgResult.status === "rejected") {
-      setBanner("API no disponible en este despliegue. Conecta el backend para jugar en vivo.");
+      const reason = cfgResult.reason;
+      const msg =
+        reason instanceof Error && reason.message
+          ? reason.message
+          : "No hay API JSON en este dominio. Comprueba /api/health, Vercel Deployment Protection en previews y variables del servidor.";
+      setBanner(msg);
+    } else {
+      setBanner((prev) =>
+        /Vercel devolvió|Deployment Protection|API no disponible|No hay API JSON|Sin conexión|401/i.test(prev) ? "" : prev
+      );
     }
   }, []);
 
