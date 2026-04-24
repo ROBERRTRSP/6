@@ -16,7 +16,13 @@ function apiUrl(path: string): string {
 
 async function json<T>(res: Response): Promise<T> {
   const contentType = res.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
+  const isJson = contentType.includes("application/json");
+  if (!isJson) {
+    if (res.status === 401 && contentType.includes("text/html")) {
+      throw new Error(
+        "Vercel devolvió 401 (HTML) en lugar de la API: suele ser Deployment Protection / SSO en previews. En Vercel: Project → Settings → Deployment Protection → permite acceso sin login a previews, o prueba el dominio de producción. Sin acceso público a /api/* el admin no puede conectar."
+      );
+    }
     throw new Error("API no disponible");
   }
   const body = (await res.json().catch(() => ({}))) as T & { error?: string };
