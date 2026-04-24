@@ -305,7 +305,8 @@ function AdminPanel({ onClose, onStartPlayer }: { onClose: () => void; onStartPl
       setLogged(true);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No autorizado");
+      const msg = e instanceof Error ? e.message : "No autorizado";
+      setError(msg === "API no disponible" ? "Backend no conectado. Configura VITE_API_BASE para usar el admin online." : msg);
     }
   }
 
@@ -462,7 +463,7 @@ function AdminPanel({ onClose, onStartPlayer }: { onClose: () => void; onStartPl
             <label>PIN administrador</label>
             <input className="adminInput" type="password" inputMode="numeric" value={pin} onChange={(e) => setPin(e.target.value)} />
             <button className="primaryBtn" onClick={submitLogin}>Entrar</button>
-            <p className="muted">PIN demo: 2468. Usá ADMIN_PASSWORD para producción.</p>
+            <p className="muted">Acceso restringido. Requiere backend conectado y credenciales de producción.</p>
             {error ? <p className="errorText">{error}</p> : null}
           </div>
         ) : (
