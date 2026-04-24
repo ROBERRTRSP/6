@@ -1,0 +1,18 @@
+{
+  "name": "lucky-six-dice-jackpot",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,magenta \"PORT=43778 npm run dev -w server\" \"node scripts/wait-for-api.mjs http://localhost:43778/api/health && VITE_API_PORT=43778 npm run dev -w client\"",
+    "lint": "npm run typecheck",
+    "typecheck": "npm run typecheck -w client && npm run typecheck -w server",
+    "build": "npm run build -w client && npm run build -w server",
+    "start": "npm run start -w server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
