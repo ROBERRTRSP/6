@@ -14,16 +14,31 @@ function apiUrl(path: string): string {
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+function nonJsonError(res: Response, contentType: string): Error {
+  const base = (import.meta.env.VITE_API_BASE as string | undefined)?.trim();
+  const crossOriginHint = base
+    ? ""
+    : " En el mismo dominio, /api debe devolver JSON (build con backend y rewrites que no envíen /api a index.html).";
+
+  if (res.status === 401) {
+    return new Error(
+      "401 sin JSON: casi siempre es Vercel Deployment Protection (SSO) bloqueando previews. Project → Settings → Deployment Protection → desactiva protección en previews o abre la URL de producción pública. Mientras /api devuelva HTML de login, el PIN no puede validarse."
+    );
+  }
+
+  return new Error(
+    `La API no respondió JSON (HTTP ${res.status}, tipo: ${contentType || "vacío"}).${crossOriginHint}` +
+      (base
+        ? ""
+        : " Si el API está en otro host, define VITE_API_BASE=https://tu-servidor (sin /api al final) y redespliega el frontend.")
+  );
+}
+
 async function json<T>(res: Response): Promise<T> {
   const contentType = res.headers.get("content-type") ?? "";
   const isJson = contentType.includes("application/json");
   if (!isJson) {
-    if (res.status === 401 && contentType.includes("text/html")) {
-      throw new Error(
-        "Vercel devolvió 401 (HTML) en lugar de la API: suele ser Deployment Protection / SSO en previews. En Vercel: Project → Settings → Deployment Protection → permite acceso sin login a previews, o prueba el dominio de producción. Sin acceso público a /api/* el admin no puede conectar."
-      );
-    }
-    throw new Error("API no disponible");
+    throw nonJsonError(res, contentType);
   }
   const body = (await res.json().catch(() => ({}))) as T & { error?: string };
   if (!res.ok) throw new Error(body.error ?? "Error de servidor");

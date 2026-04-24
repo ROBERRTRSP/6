@@ -305,12 +305,7 @@ function AdminPanel({ onClose, onStartPlayer }: { onClose: () => void; onStartPl
       setLogged(true);
       await load();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "No autorizado";
-      setError(
-        msg === "API no disponible"
-          ? "Backend no conectado. Si el frontend está en otro dominio que la API, define VITE_API_BASE con la URL del servidor (sin /api al final)."
-          : msg
-      );
+      setError(e instanceof Error ? e.message : "No autorizado");
     }
   }
 
@@ -945,7 +940,9 @@ export function App() {
       setBanner(msg);
     } else {
       setBanner((prev) =>
-        /Vercel devolvió|Deployment Protection|API no disponible|No hay API JSON|Sin conexión|401/i.test(prev) ? "" : prev
+        /Vercel devolvió|Deployment Protection|401 sin JSON|La API no respondió JSON|No hay API JSON|Sin conexión|401/i.test(prev)
+          ? ""
+          : prev
       );
     }
   }, []);
