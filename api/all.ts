@@ -3,7 +3,8 @@
  *
  * Vercel detecta cualquier archivo bajo `api/` como handler. Aquí convertimos
  * la app Express del monorepo en el handler por defecto, montando toda la
- * lógica del juego Lucky Six bajo `/api/*`.
+ * lógica del juego Lucky Six bajo `/api/*`. Sesiones con cookie-session
+ * (sin estado en servidor) para funcionar correctamente en serverless.
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
