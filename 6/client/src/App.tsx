@@ -1022,7 +1022,8 @@ export function App() {
       setResult(response);
       setRolling(true);
       if (!muted) playRoll();
-      await new Promise((r) => window.setTimeout(r, 4400));
+      // 6 dados × 0.42 s stagger + caída/bounce final ≈ 3.8 s.
+      await new Promise((r) => window.setTimeout(r, 3800));
       setSettings((s) =>
         s ? { ...s, balanceCents: response.balanceAfterCents, jackpotPoolCents: response.jackpotPoolCents } : s
       );
