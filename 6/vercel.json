@@ -1,10 +1,9 @@
 {
-  "installCommand": "npm install",
-  "buildCommand": "npm run build && rm -rf public && mkdir -p public && cp -r client/dist/. public/",
+  "installCommand": "npm ci || npm install",
+  "buildCommand": "npm run build && if [ -n \"$VERCEL\" ] && [ \"$VERCEL_ENV\" != \"development\" ]; then rm -rf public && mkdir -p public && cp -r client/dist/. public/; fi",
   "rewrites": [
-    {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/health", "destination": "/api/health" },
+    { "source": "/api/(.*)", "destination": "/api/all" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
