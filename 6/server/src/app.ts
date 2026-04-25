@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
+import cookieSession from "cookie-session";
 import cors from "cors";
 import express from "express";
-import session from "express-session";
 import type { Db } from "./db.js";
 import { createAdminRouter } from "./routes/adminApi.js";
 import { createPublicRouter } from "./routes/publicApi.js";
@@ -27,17 +27,13 @@ export function buildApp(db: Db, options: BuildAppOptions) {
   app.use(cors({ origin: options.corsOrigin, credentials: true }));
   app.use(express.json({ limit: "64kb" }));
   app.use(
-    session({
+    cookieSession({
       name: "lsix.sid",
-      secret: options.sessionSecret,
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: options.isProduction,
-        maxAge: 1000 * 60 * 60 * 8,
-      },
+      keys: [options.sessionSecret],
+      httpOnly: true,
+      sameSite: "lax",
+      secure: options.isProduction,
+      maxAge: 1000 * 60 * 60 * 8,
     })
   );
 

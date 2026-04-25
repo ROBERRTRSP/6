@@ -1,3 +1,4 @@
+/// <reference types="cookie-session" />
 import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
 import path from "node:path";
@@ -21,14 +22,14 @@ import {
 } from "../db.js";
 import type { GameSettings } from "../types.js";
 
-declare module "express-session" {
-  interface SessionData {
-    adminUser?: string;
-  }
+type AdminSession = (CookieSessionInterfaces.CookieSessionObject & { adminUser?: string }) | null;
+
+function adminSession(req: Request): AdminSession {
+  return req.session as AdminSession;
 }
 
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  if (!req.session.adminUser) {
+  if (!adminSession(req)?.adminUser) {
     res.status(401).json({ error: "No autorizado" });
     return;
   }
@@ -54,16 +55,18 @@ export function createAdminRouter(db: Db, adminUser: string, adminPassword: stri
       res.status(401).json({ error: "PIN o usuario inválido" });
       return;
     }
-    req.session.adminUser = adminUser;
+    if (!req.session) req.session = {} as CookieSessionInterfaces.CookieSessionObject;
+    (req.session as CookieSessionInterfaces.CookieSessionObject & { adminUser?: string }).adminUser = adminUser;
     res.json({ ok: true });
   });
 
   router.post("/logout", (req, res) => {
-    req.session.destroy(() => res.json({ ok: true }));
+    req.session = null;
+    res.json({ ok: true });
   });
 
   router.get("/me", requireAdmin, (req, res) => {
-    res.json({ username: req.session.adminUser });
+    res.json({ username: adminSession(req)?.adminUser });
   });
 
   router.get("/stats", requireAdmin, (_req, res) => {
@@ -94,7 +97,7 @@ export function createAdminRouter(db: Db, adminUser: string, adminPassword: stri
   router.post("/players", requireAdmin, (req, res) => {
     try {
       res.json({
-        player: createPlayer(db, req.body ?? {}, req.session.adminUser ?? "admin"),
+        player: createPlayer(db, req.body ?? {}, adminSession(req)?.adminUser ?? "admin"),
       });
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : "No se pudo crear jugador" });
@@ -114,7 +117,7 @@ export function createAdminRouter(db: Db, adminUser: string, adminPassword: stri
   router.post("/players/:id/balance", requireAdmin, (req, res) => {
     try {
       const playerId = String(req.params.id);
-      res.json(adjustPlayerBalance(db, playerId, req.body ?? {}, req.session.adminUser ?? "admin"));
+      res.json(adjustPlayerBalance(db, playerId, req.body ?? {}, adminSession(req)?.adminUser ?? "admin"));
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : "No se pudo ajustar saldo" });
     }
@@ -124,7 +127,7 @@ export function createAdminRouter(db: Db, adminUser: string, adminPassword: stri
     try {
       const playerId = String(req.params.id);
       const body = req.body as { active?: unknown };
-      res.json(setPlayerStatus(db, playerId, body.active !== false, req.session.adminUser ?? "admin"));
+      res.json(setPlayerStatus(db, playerId, body.active !== false, adminSession(req)?.adminUser ?? "admin"));
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : "No se pudo cambiar estado" });
     }
@@ -132,7 +135,7 @@ export function createAdminRouter(db: Db, adminUser: string, adminPassword: stri
 
   router.post("/players/:id/start", requireAdmin, (req, res) => {
     try {
-      const player = setActivePlayer(db, String(req.params.id), req.session.adminUser ?? "admin");
+      const player = setActivePlayer(db, String(req.params.id), adminSession(req)?.adminUser ?? "admin");
       res.json({ player });
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : "No se pudo iniciar jugador" });
@@ -172,7 +175,7 @@ export function createAdminRouter(db: Db, adminUser: string, adminPassword: stri
       if (maintenanceMode !== undefined) patch.maintenanceMode = maintenanceMode;
       if (rtpMode !== undefined) patch.rtpMode = rtpMode;
 
-      res.json({ ...patchSettings(db, patch, req.session.adminUser ?? "admin"), balanceCents: readBalance(db), activePlayer: null, now: Date.now() });
+      res.json({ ...patchSettings(db, patch, adminSession(req)?.adminUser ?? "admin"), balanceCents: readBalance(db), activePlayer: null, now: Date.now() });
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : "No se pudo guardar" });
     }
@@ -180,14 +183,14 @@ export function createAdminRouter(db: Db, adminUser: string, adminPassword: stri
 
   router.post("/maintenance/test", requireAdmin, (req, res) => {
     const body = req.body as { kind?: string };
-    writeAuditLog(db, req.session.adminUser ?? "admin", `maintenance.test.${body.kind ?? "unknown"}`, null, { ok: true });
+    writeAuditLog(db, adminSession(req)?.adminUser ?? "admin", `maintenance.test.${body.kind ?? "unknown"}`, null, { ok: true });
     res.json({ ok: true, kind: body.kind ?? "unknown", checkedAt: Date.now() });
   });
 
   router.post("/maintenance/backup", requireAdmin, async (req, res) => {
     try {
       const backupDir = path.resolve(process.cwd(), "server", "data", "backups");
-      res.json(await backupDatabase(db, backupDir, req.session.adminUser ?? "admin"));
+      res.json(await backupDatabase(db, backupDir, adminSession(req)?.adminUser ?? "admin"));
     } catch (error) {
       res.status(500).json({ error: error instanceof Error ? error.message : "No se pudo crear backup" });
     }
