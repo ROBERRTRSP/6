@@ -1022,8 +1022,10 @@ export function App() {
       setResult(response);
       setRolling(true);
       if (!muted) playRoll();
-      // 6 dados × 0.42 s stagger + caída/bounce final ≈ 3.8 s.
-      await new Promise((r) => window.setTimeout(r, 3800));
+      // Cascada de 6 dados: cada dado arranca con ~0.45s de retraso
+      // (índice * 0.45 + caída ~0.55s + asentamiento ~0.42s).
+      // Total: ~3.85s para que los seis estén en la mesa.
+      await new Promise((r) => window.setTimeout(r, 3900));
       setSettings((s) =>
         s ? { ...s, balanceCents: response.balanceAfterCents, jackpotPoolCents: response.jackpotPoolCents } : s
       );
@@ -1149,10 +1151,10 @@ export function App() {
           </div>
 
           {result && !rolling ? (
-            <div className={`kiosk__result kiosk__result--${tone}`}>
+            <div className={`kiosk__result kiosk__result--${tone}`} key={result.id}>
               <div className="kiosk__result-dice">
                 {dice.map((d, i) => (
-                  <span key={`${d}-${i}`} className={winningFaces.includes(d) ? "is-win" : ""}>
+                  <span key={`${result.id}-${i}`} className={winningFaces.includes(d) ? "is-win" : ""}>
                     {d}
                   </span>
                 ))}
@@ -1160,7 +1162,7 @@ export function App() {
               {finalCounts.length ? (
                 <div className="kiosk__result-counts">
                   {finalCounts.map(({ face, count }) => (
-                    <span key={face} className={winningFaces.includes(face) ? "is-win" : ""}>
+                    <span key={`${result.id}-c${face}`} className={winningFaces.includes(face) ? "is-win" : ""}>
                       {face} × {count}
                     </span>
                   ))}

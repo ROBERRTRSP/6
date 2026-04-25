@@ -294,40 +294,39 @@ export function DiceStage({ dice, rolling, jackpot, attract, winningFaces, settl
       const glow = glowRef.current[index];
       if (glow) {
         const glowMaterial = glow.material as THREE.MeshBasicMaterial;
+        const revealDelay = isWinningDie && settled ? index * 0.32 : 0;
         gsap.to(glowMaterial, {
-          opacity: isWinningDie ? 0.72 : 0,
-          duration: isWinningDie ? 0.45 : 0.18,
+          opacity: isWinningDie ? 0.78 : 0,
+          duration: isWinningDie ? 0.5 : 0.18,
+          delay: revealDelay,
           ease: "power2.out",
         });
         gsap.to(glow.scale, {
-          x: isWinningDie ? 1.12 : 0.72,
-          y: isWinningDie ? 1.12 : 0.72,
+          x: isWinningDie ? 1.18 : 0.72,
+          y: isWinningDie ? 1.18 : 0.72,
           z: 1,
-          duration: 0.55,
+          duration: 0.6,
+          delay: revealDelay,
           ease: "back.out(1.7)",
         });
       }
 
       if (rolling) {
         const home = homePosition(cube);
-        // Cada dado entra uno por uno con una cadencia dramática.
-        const startDelay = index * 0.42 + Math.random() * 0.06;
-        const launchX = (Math.random() - 0.5) * 0.8;
-        const launchZ = -1.4 - Math.random() * 0.4;
-        const fallHeight = 5.2 + Math.random() * 0.8;
-        const driftX = (Math.random() - 0.5) * 0.4;
-        const driftZ = (Math.random() - 0.5) * 0.35;
-        const hoverDuration = 0.18 + Math.random() * 0.06;
-        const fallDuration = 0.34 + Math.random() * 0.08;
-        const settleBounce = 0.28 + Math.random() * 0.06;
-        const spinDuration = 0.55 + Math.random() * 0.25;
+        const launchX = (Math.random() - 0.5) * 1.4;
+        const launchZ = -1.1 - Math.random() * 1.2;
+        const fallHeight = 3.4 + Math.random() * 1.4;
+        const driftX = (Math.random() - 0.5) * 0.6;
+        const driftZ = (Math.random() - 0.5) * 0.45;
+        const fallDuration = 0.55 + Math.random() * 0.22;
+        const spinDuration = 0.85 + Math.random() * 0.45;
+        const startDelay = index * 0.45 + Math.random() * 0.05;
 
         gsap.killTweensOf(cube.rotation);
         gsap.killTweensOf(cube.position);
-        // Esconde el dado fuera de cámara mientras espera su turno.
         gsap.set(cube.position, {
           x: home.x + launchX,
-          y: home.y + fallHeight + 4,
+          y: home.y + fallHeight,
           z: home.z + launchZ,
         });
         gsap.set(cube.rotation, {
@@ -336,63 +335,41 @@ export function DiceStage({ dice, rolling, jackpot, attract, winningFaces, settl
           z: Math.random() * Math.PI * 2,
         });
 
-        // Spin continuo desde que entra y mientras descansa.
         gsap.to(cube.rotation, {
-          x: `+=${Math.PI * (8 + Math.random() * 4)}`,
-          y: `+=${Math.PI * (9 + Math.random() * 6)}`,
-          z: `+=${Math.PI * (6 + Math.random() * 4)}`,
+          x: `+=${Math.PI * (6 + index + Math.random() * 4)}`,
+          y: `+=${Math.PI * (7 + Math.random() * 6)}`,
+          z: `+=${Math.PI * (5 + Math.random() * 5)}`,
           duration: spinDuration,
           repeat: -1,
           ease: "none",
           delay: startDelay,
         });
-
         gsap
           .timeline({ delay: startDelay })
-          // 1) Aparece en alto, suspendido
-          .to(cube.position, {
-            x: home.x + launchX * 0.6,
-            y: home.y + fallHeight,
-            z: home.z + launchZ * 0.7,
-            duration: hoverDuration,
-            ease: "power1.out",
-          })
-          // 2) Pequeña pausa para crear suspenso
-          .to(cube.position, {
-            y: home.y + fallHeight + 0.18,
-            duration: 0.16,
-            ease: "sine.inOut",
-            yoyo: true,
-            repeat: 1,
-          })
-          // 3) Caída pesada
           .to(cube.position, {
             x: home.x + driftX,
             y: home.y,
             z: home.z + driftZ,
             duration: fallDuration,
-            ease: "power3.in",
+            ease: "power2.in",
           })
-          // 4) Rebote alto
           .to(cube.position, {
-            y: home.y + 0.85 + Math.random() * 0.25,
-            duration: 0.18,
+            y: home.y + 0.74 + Math.random() * 0.32,
+            duration: 0.16 + Math.random() * 0.08,
             ease: "power1.out",
           })
-          // 5) Aterrizaje final
           .to(cube.position, {
-            x: home.x + driftX * 0.4,
+            x: home.x + driftX * 0.45,
             y: home.y,
-            z: home.z + driftZ * 0.4,
-            duration: settleBounce,
+            z: home.z + driftZ * 0.45,
+            duration: 0.26 + Math.random() * 0.08,
             ease: "bounce.out",
           })
-          // 6) Vibración sutil mientras los demás siguen cayendo
           .to(cube.position, {
-            x: home.x + driftX * 0.18,
-            y: home.y + 0.12,
-            z: home.z + driftZ * 0.18,
-            duration: 0.24,
+            x: home.x + driftX * 0.22,
+            y: home.y + 0.16,
+            z: home.z + driftZ * 0.22,
+            duration: 0.22 + Math.random() * 0.08,
             yoyo: true,
             repeat: -1,
             ease: "sine.inOut",
@@ -401,12 +378,12 @@ export function DiceStage({ dice, rolling, jackpot, attract, winningFaces, settl
         gsap.killTweensOf(cube.rotation);
         gsap.killTweensOf(cube.position);
         const home = homePosition(cube);
-        const stopDelay = index * 0.05 + Math.random() * 0.05;
+        const stopDelay = index * 0.18 + Math.random() * 0.05;
         gsap.to(cube.position, {
           x: home.x,
           y: home.y,
           z: home.z,
-          duration: 0.32 + index * 0.03,
+          duration: 0.42,
           delay: stopDelay,
           ease: "bounce.out",
         });
@@ -414,7 +391,7 @@ export function DiceStage({ dice, rolling, jackpot, attract, winningFaces, settl
           x: Math.PI * 2,
           y: Math.PI * 2 + (index % 4) * (Math.PI / 2),
           z: 0,
-          duration: 0.55 + index * 0.06 + Math.random() * 0.1,
+          duration: 0.6,
           delay: stopDelay,
           ease: "back.out(1.8)",
         });
