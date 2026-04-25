@@ -6,13 +6,29 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
 }
 
 * { box-sizing: border-box; }
 
+html {
+  width: 100%;
+  min-height: 100%;
+  background: #0f1111;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   overflow: hidden;
+  width: 100%;
+  min-height: 100%;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
   background:
     radial-gradient(circle at 50% -10%, rgba(255, 214, 66, 0.38), transparent 34%),
     radial-gradient(circle at 5% 12%, rgba(255, 0, 128, 0.28), transparent 31%),
@@ -22,13 +38,17 @@ body {
 }
 
 button, input, select { font: inherit; }
+input, select, textarea { font-size: 16px; }
 button { cursor: pointer; border: 0; color: inherit; }
 
 .app {
   position: relative;
   width: 100vw;
+  min-height: 100vh;
+  min-height: 100dvh;
   height: 100vh;
-  padding: 20px;
+  height: 100dvh;
+  padding: max(16px, var(--safe-top)) max(16px, var(--safe-right)) max(16px, var(--safe-bottom)) max(16px, var(--safe-left));
   isolation: isolate;
   transition: filter 0.2s ease, background 0.25s ease;
 }
@@ -1256,4 +1276,219 @@ body {
 
 @media (max-width: 640px) {
   .settingsGrid, .adminGrid, .adminTwoCols, .maintenanceGrid { grid-template-columns: 1fr; }
+}
+
+@supports (-webkit-touch-callout: none) {
+  body {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@media (pointer: coarse) {
+  button,
+  .faceBtn,
+  .quickRow button,
+  .adminTab,
+  .maintenanceBtn {
+    min-height: 54px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1180px) {
+  .app {
+    overflow: hidden;
+    padding: max(14px, var(--safe-top)) max(14px, var(--safe-right)) max(14px, var(--safe-bottom)) max(14px, var(--safe-left));
+  }
+
+  .topHud {
+    grid-template-columns: 1fr 1.45fr 1fr 132px;
+    height: 86px;
+    gap: 8px;
+  }
+
+  .hudCard,
+  .jackpotCard,
+  .soundBtn {
+    padding: 9px 10px;
+  }
+
+  .hudCard strong {
+    font-size: clamp(1rem, 2.4vw, 1.65rem);
+  }
+
+  .jackpotCard strong {
+    font-size: clamp(1.45rem, 4vw, 2.65rem);
+  }
+
+  .soundBtn {
+    font-size: 0.78rem;
+  }
+
+  .gameLayout {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 38vw);
+    gap: 8px;
+    height: calc(100dvh - 124px - var(--safe-top) - var(--safe-bottom));
+    margin-top: 8px;
+  }
+
+  .stagePanel {
+    border-radius: 22px;
+  }
+
+  .betPanel {
+    max-height: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 6px 0;
+    gap: 8px;
+  }
+
+  .faceGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .faceBtn {
+    min-height: 82px;
+    border-radius: 14px;
+  }
+
+  .faceNumber {
+    font-size: 2.35rem;
+  }
+
+  .quickRow {
+    gap: 8px;
+  }
+
+  .quickRow button {
+    min-height: 50px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+  }
+
+  .resultDock {
+    max-height: 150px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .playBtn {
+    min-height: 78px;
+    border-radius: 18px;
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+  }
+
+  .bottomInfo {
+    left: max(14px, var(--safe-left));
+    right: max(14px, var(--safe-right));
+    bottom: max(8px, var(--safe-bottom));
+    font-size: 0.78rem;
+  }
+
+  .historyRail {
+    display: none;
+  }
+
+  .adminPanel {
+    width: calc(100vw - max(28px, var(--safe-left) + var(--safe-right)));
+    max-height: calc(100dvh - max(28px, var(--safe-top) + var(--safe-bottom)));
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1180px) and (orientation: portrait) {
+  body {
+    position: static;
+    overflow: auto;
+  }
+
+  .app {
+    height: auto;
+    min-height: 100dvh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .topHud {
+    grid-template-columns: 1fr 1fr;
+    height: auto;
+  }
+
+  .gameLayout {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: unset;
+  }
+
+  .stagePanel {
+    min-height: 44dvh;
+  }
+
+  .betPanel {
+    overflow: visible;
+    padding-bottom: calc(48px + var(--safe-bottom));
+  }
+
+  .faceGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .faceBtn {
+    min-height: 104px;
+  }
+
+  .quickRow {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .playBtn {
+    min-height: 96px;
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    position: static;
+    overflow: auto;
+  }
+
+  .app {
+    height: auto;
+    min-height: 100dvh;
+    overflow: auto;
+  }
+
+  .topHud {
+    grid-template-columns: 1fr;
+  }
+
+  .gameLayout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .stagePanel {
+    min-height: 42dvh;
+  }
+
+  .betPanel {
+    padding-bottom: calc(56px + var(--safe-bottom));
+  }
+
+  .faceGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .quickRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
