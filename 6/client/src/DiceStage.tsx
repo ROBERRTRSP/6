@@ -193,12 +193,12 @@ export function DiceStage({ dice, rolling, jackpot, attract, winningFaces, settl
     diceRef.current = [];
     glowRef.current = [];
     const positions = [
-      [-2.6, 0.15, -0.7],
-      [-1.5, 0.15, 0.75],
-      [-0.35, 0.15, -0.55],
-      [0.9, 0.15, 0.72],
-      [2.05, 0.15, -0.55],
-      [3.0, 0.15, 0.62],
+      [-2.6, 0.15, -0.55],
+      [-1.55, 0.15, 0.55],
+      [-0.5, 0.15, -0.55],
+      [0.55, 0.15, 0.55],
+      [1.6, 0.15, -0.55],
+      [2.65, 0.15, 0.55],
     ];
 
     positions.forEach(([x, y, z], index) => {
@@ -264,10 +264,10 @@ export function DiceStage({ dice, rolling, jackpot, attract, winningFaces, settl
     if (!camera) return;
 
     const target = settled
-      ? { x: 0, y: 4.45, z: 6.65, fov: 37 }
+      ? { x: 0, y: 4.6, z: 8.4, fov: 46 }
       : rolling
-        ? { x: 0, y: 5.8, z: 9.2, fov: 44 }
-        : { x: 0, y: 5.4, z: 8.6, fov: 42 };
+        ? { x: 0, y: 5.8, z: 9.2, fov: 48 }
+        : { x: 0, y: 5.4, z: 8.6, fov: 46 };
 
     gsap.to(camera.position, {
       x: target.x,
