@@ -9,5 +9,5 @@
     "esModuleInterop": true,
     "allowImportingTsExtensions": false
   },
-  "include": ["src/**/*.ts"]
+  "include": ["api/**/*.ts"]
 }

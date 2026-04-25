@@ -1,18 +1,16 @@
 /**
- * Punto de entrada para Vercel (Express on Vercel).
+ * Función Vercel única que sirve toda la API Express.
  *
- * Importamos `express` directamente para asegurar la detección por parte de
- * Vercel y reutilizamos toda la lógica del monorepo en `6/`.
+ * Vercel detecta cualquier archivo bajo `api/` como handler. Aquí convertimos
+ * la app Express del monorepo en el handler por defecto, montando toda la
+ * lógica del juego Lucky Six bajo `/api/*`.
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import dotenv from "dotenv";
 import express from "express";
 import { buildApp } from "../6/server/src/app.js";
 import { loadServerConfig } from "../6/server/src/config.js";
 import { openDatabase } from "../6/server/src/db.js";
-
-dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..", "6");
