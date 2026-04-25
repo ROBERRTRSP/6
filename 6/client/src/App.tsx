@@ -1022,7 +1022,7 @@ export function App() {
       setResult(response);
       setRolling(true);
       if (!muted) playRoll();
-      await new Promise((r) => window.setTimeout(r, 2800));
+      await new Promise((r) => window.setTimeout(r, 4400));
       setSettings((s) =>
         s ? { ...s, balanceCents: response.balanceAfterCents, jackpotPoolCents: response.jackpotPoolCents } : s
       );

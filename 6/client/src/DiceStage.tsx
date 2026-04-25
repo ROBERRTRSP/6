@@ -266,21 +266,21 @@ export function DiceStage({ dice, rolling, jackpot, attract, winningFaces, settl
     const target = settled
       ? { x: 0, y: 4.6, z: 8.4, fov: 46 }
       : rolling
-        ? { x: 0, y: 5.8, z: 9.2, fov: 48 }
+        ? { x: 0, y: 6.4, z: 10.6, fov: 52 }
         : { x: 0, y: 5.4, z: 8.6, fov: 46 };
 
     gsap.to(camera.position, {
       x: target.x,
       y: target.y,
       z: target.z,
-      duration: settled ? 0.85 : 0.45,
-      ease: "power2.out",
+      duration: settled ? 1.05 : rolling ? 0.85 : 0.45,
+      ease: settled ? "power3.out" : "power2.out",
       onUpdate: () => camera.lookAt(0, 0, 0),
     });
     gsap.to(camera, {
       fov: target.fov,
-      duration: settled ? 0.85 : 0.45,
-      ease: "power2.out",
+      duration: settled ? 1.05 : rolling ? 0.85 : 0.45,
+      ease: settled ? "power3.out" : "power2.out",
       onUpdate: () => camera.updateProjectionMatrix(),
     });
   }, [rolling, settled]);
@@ -310,14 +310,14 @@ export function DiceStage({ dice, rolling, jackpot, attract, winningFaces, settl
 
       if (rolling) {
         const home = homePosition(cube);
-        const launchX = (Math.random() - 0.5) * 1.4;
-        const launchZ = -1.1 - Math.random() * 1.2;
-        const fallHeight = 3.4 + Math.random() * 1.4;
-        const driftX = (Math.random() - 0.5) * 0.6;
-        const driftZ = (Math.random() - 0.5) * 0.45;
-        const fallDuration = 0.48 + Math.random() * 0.24;
-        const spinDuration = 0.72 + Math.random() * 0.48;
-        const startDelay = index * 0.055 + Math.random() * 0.08;
+        const launchX = (Math.random() - 0.5) * 1.6;
+        const launchZ = -1.4 - Math.random() * 1.4;
+        const fallHeight = 4.6 + Math.random() * 1.8;
+        const driftX = (Math.random() - 0.5) * 0.7;
+        const driftZ = (Math.random() - 0.5) * 0.5;
+        const fallDuration = 0.82 + Math.random() * 0.4;
+        const spinDuration = 1.0 + Math.random() * 0.55;
+        const startDelay = 0.18 + index * 0.16 + Math.random() * 0.12;
 
         gsap.killTweensOf(cube.rotation);
         gsap.killTweensOf(cube.position);
@@ -332,41 +332,85 @@ export function DiceStage({ dice, rolling, jackpot, attract, winningFaces, settl
           z: Math.random() * Math.PI * 2,
         });
 
+        // El dado nunca deja de girar mientras está en el aire.
         gsap.to(cube.rotation, {
-          x: `+=${Math.PI * (6 + index + Math.random() * 4)}`,
-          y: `+=${Math.PI * (7 + Math.random() * 6)}`,
-          z: `+=${Math.PI * (5 + Math.random() * 5)}`,
+          x: `+=${Math.PI * (8 + index + Math.random() * 5)}`,
+          y: `+=${Math.PI * (9 + Math.random() * 7)}`,
+          z: `+=${Math.PI * (7 + Math.random() * 6)}`,
           duration: spinDuration,
           repeat: -1,
           ease: "none",
-          delay: startDelay,
         });
+
+        const apexY = home.y + fallHeight;
+        const wobbleX = (Math.random() - 0.5) * 0.4;
+        const wobbleZ = (Math.random() - 0.5) * 0.32;
+
         gsap
           .timeline({ delay: startDelay })
+          // 1. Suspenso: vaivén en el aire (anticipación).
+          .to(cube.position, {
+            x: home.x + launchX + wobbleX,
+            y: apexY - 0.25,
+            z: home.z + launchZ + wobbleZ,
+            duration: 0.36,
+            yoyo: true,
+            repeat: 1,
+            ease: "sine.inOut",
+          })
+          // 2. Pausa intriga (cuanto más a la derecha más se hace esperar).
+          .to(cube.position, {
+            x: home.x + launchX,
+            y: apexY + 0.18,
+            z: home.z + launchZ,
+            duration: 0.2 + index * 0.05,
+            ease: "sine.inOut",
+          })
+          // 3. Caída con gravedad pesada.
           .to(cube.position, {
             x: home.x + driftX,
             y: home.y,
             z: home.z + driftZ,
             duration: fallDuration,
-            ease: "power2.in",
+            ease: "power3.in",
           })
+          // 4. Primer rebote dramático.
           .to(cube.position, {
-            y: home.y + 0.74 + Math.random() * 0.32,
-            duration: 0.16 + Math.random() * 0.08,
+            y: home.y + 0.95 + Math.random() * 0.32,
+            duration: 0.18 + Math.random() * 0.06,
             ease: "power1.out",
           })
           .to(cube.position, {
-            x: home.x + driftX * 0.45,
+            x: home.x + driftX * 0.55,
             y: home.y,
-            z: home.z + driftZ * 0.45,
-            duration: 0.26 + Math.random() * 0.08,
+            z: home.z + driftZ * 0.55,
+            duration: 0.26 + Math.random() * 0.06,
             ease: "bounce.out",
           })
+          // 5. Segundo rebote más pequeño.
           .to(cube.position, {
-            x: home.x + driftX * 0.22,
-            y: home.y + 0.16,
-            z: home.z + driftZ * 0.22,
-            duration: 0.22 + Math.random() * 0.08,
+            y: home.y + 0.42,
+            duration: 0.14,
+            ease: "power1.out",
+          })
+          .to(cube.position, {
+            x: home.x + driftX * 0.28,
+            y: home.y,
+            z: home.z + driftZ * 0.28,
+            duration: 0.22,
+            ease: "bounce.out",
+          })
+          // 6. Tercer rebote casi imperceptible y respiro final.
+          .to(cube.position, {
+            y: home.y + 0.18,
+            duration: 0.12,
+            ease: "power1.out",
+          })
+          .to(cube.position, {
+            x: home.x + driftX * 0.12,
+            y: home.y + 0.05,
+            z: home.z + driftZ * 0.12,
+            duration: 0.36,
             yoyo: true,
             repeat: -1,
             ease: "sine.inOut",
