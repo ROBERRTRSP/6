@@ -4,9 +4,18 @@
   "type": "module",
   "workspaces": ["6/client", "6/server"],
   "dependencies": {
-    "express": "^4.21.2"
+    "@types/express": "^5.0.0",
+    "better-sqlite3": "^11.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "nanoid": "^5.0.9"
   },
   "scripts": {
     "build": "npm run build -w client && npm run build -w server"
+  },
+  "devDependencies": {
+    "typescript": "~5.7.3"
   }
 }
