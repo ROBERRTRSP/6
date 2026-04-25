@@ -9,13 +9,26 @@ import type {
   PublicGameConfig,
 } from "./types";
 
+function apiBase(): string {
+  const explicit = (import.meta.env.VITE_API_BASE as string | undefined)?.trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+
+  const apiPort = (import.meta.env.VITE_API_PORT as string | undefined)?.trim();
+  if (apiPort && typeof window !== "undefined") {
+    const host = window.location.hostname || "localhost";
+    return `http://${host}:${apiPort}`;
+  }
+
+  return "";
+}
+
 function apiUrl(path: string): string {
-  const base = (import.meta.env.VITE_API_BASE as string | undefined)?.trim().replace(/\/$/, "") ?? "";
+  const base = apiBase();
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 function nonJsonError(res: Response, contentType: string): Error {
-  const base = (import.meta.env.VITE_API_BASE as string | undefined)?.trim();
+  const base = apiBase();
   const crossOriginHint = base
     ? ""
     : " En el mismo dominio, /api debe devolver JSON (build con backend y rewrites que no envíen /api a index.html).";
