@@ -882,6 +882,16 @@ function AdminPanel({ onClose, onStartPlayer }: { onClose: () => void; onStartPl
   );
 }
 
+function vibrate(pattern: number | number[]) {
+  if (typeof navigator === "undefined") return;
+  const nav = navigator as Navigator & { vibrate?: (pattern: number | number[]) => boolean };
+  try {
+    nav.vibrate?.(pattern);
+  } catch {
+    // ignore: not all browsers expose the Vibration API
+  }
+}
+
 export function App() {
   const [settings, setSettings] = useState<PublicGameConfig | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -895,7 +905,20 @@ export function App() {
   const [banner, setBanner] = useState("");
   const [showAdmin, setShowAdmin] = useState(false);
   const [lastTouch, setLastTouch] = useState(Date.now());
+  const [apiOnline, setApiOnline] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [now, setNow] = useState(() => new Date());
   const adminTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const clockText = useMemo(
+    () => now.toLocaleTimeString("es-DO", { hour: "2-digit", minute: "2-digit", hour12: false }),
+    [now]
+  );
 
   const wager = totalBet(bets);
   const displayBalance = activePlayer?.balanceCents ?? settings?.balanceCents ?? 0;
@@ -930,6 +953,7 @@ export function App() {
     setActivePlayer(cfg.activePlayer);
     setStats(statsResult.status === "fulfilled" ? statsResult.value : DEFAULT_STATS);
     setHistory(historyResult.status === "fulfilled" ? historyResult.value.plays : []);
+    setApiOnline(cfgResult.status === "fulfilled");
 
     if (cfgResult.status === "rejected") {
       const reason = cfgResult.reason;
@@ -1017,8 +1041,22 @@ export function App() {
     }
   }
 
+  const playDisabled = rolling || !settings || settings.maintenanceMode;
+  const jackpotShare = Math.floor((wager * (settings?.jackpotContributionPercent ?? 3)) / 100);
+  const headline = rolling
+    ? "RODANDO DADOS"
+    : attract
+    ? "TOCA UN NUMERO"
+    : result
+    ? resultMessage(result).toUpperCase()
+    : "ELIGE NUMEROS Y JUGÁ";
+
   return (
-    <div className={`app ${tone}Tone`} style={{ filter: `brightness(${settings?.brightness ?? 100}%)` }} onPointerDown={touch}>
+    <div
+      className={`app kiosk ${tone}Tone ${historyOpen ? "kiosk--history-open" : ""}`}
+      style={{ filter: `brightness(${settings?.brightness ?? 100}%)` }}
+      onPointerDown={touch}
+    >
       <button
         className="adminHotCorner"
         aria-label="Acceso administrador"
@@ -1029,38 +1067,70 @@ export function App() {
           if (adminTimer.current) window.clearTimeout(adminTimer.current);
         }}
       />
-      <button className="adminVisibleBtn" type="button" onClick={() => setShowAdmin(true)}>
-        Admin
-      </button>
-      {activePlayer ? (
-        <button
-          className="playerLogoutBtn"
-          type="button"
-          onClick={() => {
-            setActivePlayer(null);
-            void clearActivePlayer().catch(() => {});
-          }}
-        >
-          Salir jugador
-        </button>
-      ) : null}
 
-      <header className="topHud">
-        <div className="hudCard">
-          <span>{activePlayer ? `Jugador: ${activePlayer.alias}` : "Balance"}</span>
-          <strong>{money(displayBalance)}</strong>
+      <header className="kiosk__hud" role="banner">
+        <div className="kiosk__hud-card kiosk__hud-balance">
+          <span className="kiosk__hud-label">{activePlayer ? activePlayer.alias : "Balance"}</span>
+          <strong className="kiosk__hud-value">{money(displayBalance)}</strong>
         </div>
-        <div className={`hudCard resultHud ${tone}`}>
-          <span>Resultado</span>
-          <strong>{attract ? "Toca para jugar" : rolling ? "Rodando dados oficiales" : resultMessage(result)}</strong>
-          {banner ? <small>{banner}</small> : null}
+
+        <div className="kiosk__hud-card kiosk__hud-jackpot">
+          <span className="kiosk__hud-label">Jackpot</span>
+          <strong className="kiosk__hud-value kiosk__hud-jackpot-value">
+            {money(settings?.jackpotPoolCents ?? 0)}
+          </strong>
         </div>
-        <div className="jackpotCard"><span>JACKPOT</span><strong>{money(settings?.jackpotPoolCents ?? 0)}</strong></div>
-        <button className="soundBtn" onClick={() => setMuted((m) => !m)}>{muted ? "SONIDO OFF" : "SONIDO ON"}</button>
+
+        <div className="kiosk__hud-meta">
+          <div
+            className={`kiosk__pill kiosk__pill--${apiOnline ? "online" : "offline"}`}
+            role="status"
+            aria-live="polite"
+          >
+            <span className="kiosk__pill-dot" aria-hidden />
+            {apiOnline ? "EN LINEA" : "SIN CONEXION"}
+          </div>
+          <div className="kiosk__pill kiosk__pill--clock" aria-label="Hora">
+            {clockText}
+          </div>
+          <button
+            className={`kiosk__sound-btn ${muted ? "is-muted" : "is-on"}`}
+            type="button"
+            aria-pressed={muted}
+            aria-label={muted ? "Activar sonido" : "Silenciar"}
+            onClick={() => {
+              vibrate(8);
+              setMuted((m) => !m);
+            }}
+          >
+            <span aria-hidden>{muted ? "🔇" : "🔊"}</span>
+            <span className="kiosk__sound-label">{muted ? "MUTE" : "SONIDO"}</span>
+          </button>
+          {activePlayer ? (
+            <button
+              className="kiosk__chip kiosk__chip--logout"
+              type="button"
+              onClick={() => {
+                vibrate(15);
+                setActivePlayer(null);
+                void clearActivePlayer().catch(() => {});
+              }}
+            >
+              Salir
+            </button>
+          ) : null}
+          <button
+            className="kiosk__chip kiosk__chip--admin"
+            type="button"
+            onClick={() => setShowAdmin(true)}
+          >
+            Admin
+          </button>
+        </div>
       </header>
 
-      <main className="gameLayout">
-        <section className="stagePanel">
+      <main className="kiosk__game" role="main">
+        <section className={`kiosk__stage kiosk__stage--${tone}`} aria-label="Zona de dados">
           <DiceStage
             dice={dice}
             rolling={rolling}
@@ -1069,90 +1139,232 @@ export function App() {
             winningFaces={winningFaces}
             settled={Boolean(result && !rolling)}
           />
-        </section>
 
-        <section className="betPanel">
+          <div
+            className={`kiosk__headline kiosk__headline--${tone} ${rolling ? "is-rolling" : ""}`}
+            aria-live="polite"
+          >
+            {headline}
+          </div>
+
           {result && !rolling ? (
-            <div className={`resultDock ${tone}`}>
-              <>
-                <div className="resultDockCounts">
+            <div className={`kiosk__result kiosk__result--${tone}`}>
+              <div className="kiosk__result-dice">
+                {dice.map((d, i) => (
+                  <span key={`${d}-${i}`} className={winningFaces.includes(d) ? "is-win" : ""}>
+                    {d}
+                  </span>
+                ))}
+              </div>
+              {finalCounts.length ? (
+                <div className="kiosk__result-counts">
                   {finalCounts.map(({ face, count }) => (
-                    <span key={face} className={winningFaces.includes(face) ? "resultCounterWin" : ""}>
-                      {face} = {count}x
+                    <span key={face} className={winningFaces.includes(face) ? "is-win" : ""}>
+                      {face} × {count}
                     </span>
                   ))}
                 </div>
-                <div className="diceReadout resultDockDice">
-                  {dice.map((d, i) => (
-                    <span key={`${d}-${i}`} className={winningFaces.includes(d) ? "diceReadoutWin" : ""}>
-                      {d}
-                    </span>
-                  ))}
-                </div>
-              </>
+              ) : null}
             </div>
           ) : null}
 
-          <div className="faceGrid">
+          {banner ? (
+            <div className="kiosk__banner" role="status">
+              {banner}
+            </div>
+          ) : null}
+
+          <button
+            type="button"
+            className={`kiosk__history-toggle ${historyOpen ? "is-open" : ""}`}
+            onClick={() => {
+              vibrate(8);
+              setHistoryOpen((open) => !open);
+            }}
+            aria-expanded={historyOpen}
+            aria-controls="kiosk-history"
+          >
+            <span aria-hidden>📜</span>
+            Historial
+          </button>
+        </section>
+
+        <section className="kiosk__controls" aria-label="Controles de apuesta">
+          <div className="kiosk__faces" role="group" aria-label="Selecciona número">
             {FACES.map((face) => (
               <button
                 key={face}
-                className={`faceBtn ${focus === face ? "focused" : ""} ${bets[face] > 0 ? "active" : ""}`}
-                onClick={() => {
+                type="button"
+                className={`kiosk__face ${focus === face ? "is-focus" : ""} ${
+                  bets[face] > 0 ? "is-bet" : ""
+                }`}
+                onPointerDown={() => {
+                  vibrate(6);
                   touch();
                   setFocus(face);
                 }}
+                aria-pressed={focus === face}
+                aria-label={`Número ${face}${
+                  bets[face] > 0 ? `, apostado ${money(bets[face])}` : ""
+                }`}
               >
-                <span className="faceNumber">{face}</span>
-                <small>{money(bets[face])}</small>
+                <span className="kiosk__face-number">{face}</span>
+                {bets[face] > 0 ? (
+                  <span className="kiosk__face-amount">{money(bets[face])}</span>
+                ) : (
+                  <span className="kiosk__face-amount kiosk__face-amount--empty">—</span>
+                )}
               </button>
             ))}
           </div>
 
-          <div className="quickRow">
-            {QUICK.map((amount) => <button key={amount} onClick={() => add(amount)}>+{money(amount)}</button>)}
-            <button onClick={maxBet}>MAX</button>
-            <button onClick={() => setBets({ ...EMPTY_BETS })}>BORRAR</button>
+          <div className="kiosk__amounts" role="group" aria-label="Monto rápido">
+            {QUICK.map((amount) => (
+              <button
+                key={amount}
+                type="button"
+                className="kiosk__amount-btn"
+                onPointerDown={() => {
+                  vibrate(5);
+                  add(amount);
+                }}
+              >
+                +{money(amount)}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="kiosk__amount-btn kiosk__amount-btn--max"
+              onPointerDown={() => {
+                vibrate(10);
+                maxBet();
+              }}
+            >
+              MAX
+            </button>
+            <button
+              type="button"
+              className="kiosk__amount-btn kiosk__amount-btn--clear"
+              onPointerDown={() => {
+                vibrate([8, 16, 8]);
+                setBets({ ...EMPTY_BETS });
+              }}
+            >
+              BORRAR
+            </button>
           </div>
 
-          <div className="summaryStrip">
-            <span>Total: <strong>{money(wager)}</strong></span>
-            <span>Aporte jackpot: <strong>{money(Math.floor((wager * (settings?.jackpotContributionPercent ?? 3)) / 100))}</strong></span>
+          <div className="kiosk__summary">
+            <div>
+              <span>Apostado</span>
+              <strong>{money(wager)}</strong>
+            </div>
+            <div>
+              <span>Aporte jackpot</span>
+              <strong>{money(jackpotShare)}</strong>
+            </div>
           </div>
 
-          <button className="playBtn" disabled={rolling || !settings || settings.maintenanceMode} onClick={play}>
+          <button
+            type="button"
+            className={`kiosk__cta ${rolling ? "is-rolling" : ""}`}
+            disabled={playDisabled}
+            onPointerDown={() => {
+              if (!playDisabled) vibrate(20);
+            }}
+            onClick={play}
+          >
             {rolling ? "RODANDO..." : "JUGAR"}
           </button>
         </section>
       </main>
 
-      <footer className="bottomInfo">
-        <span>{settings?.demoMode ? "MODO DEMO ACTIVO" : "Offline local · SQLite · RNG servidor"}</span>
-        <span>Jugadas hoy: {stats?.playsToday ?? 0} · Pagado hoy: {money(stats?.totalPaidToday ?? 0)}</span>
-      </footer>
-
-      <aside className="historyRail">
-        <h3>Últimas</h3>
-        {history.slice(0, 6).map((h) => (
-          <div key={h.id} className="historyItem">
-            <span>{h.dice.at(-1)?.join(" ")}</span>
-            <strong>{money(h.payoutCents)}</strong>
-          </div>
-        ))}
+      <aside
+        id="kiosk-history"
+        className={`kiosk__history ${historyOpen ? "is-open" : ""}`}
+        aria-label="Últimos resultados"
+        aria-hidden={!historyOpen}
+      >
+        <header className="kiosk__history-header">
+          <h2>Últimas jugadas</h2>
+          <button
+            type="button"
+            className="kiosk__history-close"
+            onClick={() => setHistoryOpen(false)}
+            aria-label="Cerrar historial"
+          >
+            ✕
+          </button>
+        </header>
+        {history.length === 0 ? (
+          <p className="kiosk__history-empty">Aún no hay jugadas registradas.</p>
+        ) : (
+          <ul className="kiosk__history-list">
+            {history.slice(0, 14).map((h) => {
+              const last = h.dice.at(-1) ?? [];
+              const won = h.payoutCents > 0;
+              const isJp = h.jackpotPaidCents > 0;
+              return (
+                <li
+                  key={h.id}
+                  className={`kiosk__history-item ${
+                    isJp ? "is-jp" : won ? "is-win" : "is-lose"
+                  }`}
+                >
+                  <span className="kiosk__history-dice">{last.join(" · ")}</span>
+                  <strong className="kiosk__history-payout">
+                    {won ? `+${money(h.payoutCents)}` : `−${money(h.totalWagerCents)}`}
+                  </strong>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </aside>
+
+      <button
+        type="button"
+        className={`kiosk__history-scrim ${historyOpen ? "is-open" : ""}`}
+        aria-label="Cerrar historial"
+        onClick={() => setHistoryOpen(false)}
+        tabIndex={historyOpen ? 0 : -1}
+      />
+
+      <footer className="kiosk__footer" role="contentinfo">
+        <span>
+          {settings?.maintenanceMode
+            ? "MANTENIMIENTO"
+            : settings?.demoMode
+            ? "MODO DEMO"
+            : "EN VIVO"}
+        </span>
+        <span>
+          Hoy {stats?.playsToday ?? 0} jugadas · {money(stats?.totalPaidToday ?? 0)} pagado
+        </span>
+      </footer>
 
       {showAdmin ? (
         <AdminPanel
           onClose={() => setShowAdmin(false)}
           onStartPlayer={(player) => {
             setActivePlayer(player);
-            setSettings((current) => (current ? { ...current, activePlayer: player, balanceCents: player.balanceCents } : current));
+            setSettings((current) =>
+              current
+                ? { ...current, activePlayer: player, balanceCents: player.balanceCents }
+                : current
+            );
             setShowAdmin(false);
             setBanner("");
           }}
         />
       ) : null}
-      {tone === "jackpot" ? <div className="coinRain" aria-hidden>{Array.from({ length: 36 }, (_, i) => <i key={i} />)}</div> : null}
+      {tone === "jackpot" ? (
+        <div className="coinRain" aria-hidden>
+          {Array.from({ length: 36 }, (_, i) => (
+            <i key={i} />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
