@@ -1,0 +1,631 @@
+:root {
+  --ink: #10231a;
+  --ink-soft: #2f4a3c;
+  --paper: #f3f7f2;
+  --panel: rgba(255, 252, 245, 0.92);
+  --line: rgba(16, 35, 26, 0.12);
+  --green: #0f6a45;
+  --green-deep: #084d2f;
+  --gold: #d4a017;
+  --gold-soft: #f0d57a;
+  --danger: #b42318;
+  --shadow: 0 18px 50px rgba(8, 36, 24, 0.22);
+  --radius: 22px;
+  --font-display: "Bricolage Grotesque", Georgia, serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+  color: var(--ink);
+  font-family: var(--font-body);
+  background: #0b2418;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  border: 0;
+  cursor: pointer;
+}
+
+.shell {
+  position: relative;
+  min-height: 100vh;
+  padding: 18px;
+  overflow: hidden;
+}
+
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%, rgba(212, 160, 23, 0.28), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 10%, rgba(46, 168, 110, 0.35), transparent 50%),
+    linear-gradient(160deg, #0b2418 0%, #123524 42%, #0a1c14 100%);
+  z-index: 0;
+}
+
+.atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.35;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+.shell--flash .atmosphere {
+  animation: flashPulse 0.7s ease;
+}
+
+@keyframes flashPulse {
+  0% {
+    filter: brightness(1);
+  }
+  35% {
+    filter: brightness(1.25);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+.topbar,
+.stage {
+  position: relative;
+  z-index: 1;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  animation: rise 0.55s ease both;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #f7f2e4;
+}
+
+.brandMark {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, var(--gold-soft), var(--gold));
+  color: #2a1c00;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.15rem;
+  box-shadow: 0 8px 24px rgba(212, 160, 23, 0.35);
+}
+
+.brandName {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.brandTag {
+  margin: 4px 0 0;
+  opacity: 0.75;
+  font-size: 0.95rem;
+}
+
+.topMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  color: #e8f5ea;
+  gap: 2px;
+}
+
+.topMeta span {
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.topMeta strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.sellPane,
+.sidePane {
+  animation: rise 0.65s ease both;
+}
+
+.sidePane {
+  animation-delay: 0.08s;
+  display: grid;
+  gap: 14px;
+}
+
+.sellPane {
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: calc(var(--radius) + 6px);
+  padding: 18px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.gameTabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.gameTab {
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(16, 35, 26, 0.05);
+  color: var(--ink-soft);
+  transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.gameTab span {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+
+.gameTab small {
+  opacity: 0.7;
+}
+
+.gameTab.is-active {
+  background: linear-gradient(145deg, #127a4f, #0b5135);
+  color: #f7fff8;
+  transform: translateY(-1px);
+}
+
+.ticketBoard {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(243, 247, 242, 0.9)),
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 10px,
+      rgba(15, 106, 69, 0.035) 10px,
+      rgba(15, 106, 69, 0.035) 11px
+    );
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.boardLabel {
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.picks {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.pick {
+  flex: 1;
+  min-height: 88px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: #10231a;
+  color: #f4efe2;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.pick.is-current {
+  box-shadow: inset 0 0 0 2px var(--gold);
+  animation: pulse 1.2s ease infinite;
+}
+
+.pick.is-filled {
+  background: linear-gradient(160deg, #176b49, #0d3f2b);
+  transform: translateY(-2px);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 2px rgba(212, 160, 23, 0.55);
+  }
+  50% {
+    box-shadow: inset 0 0 0 2px rgba(212, 160, 23, 1);
+  }
+}
+
+.amountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.amountToggle {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(16, 35, 26, 0.08);
+  font-weight: 600;
+}
+
+.amountToggle.is-active {
+  background: var(--gold);
+  color: #2a1c00;
+}
+
+.amountValue {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: -0.03em;
+}
+
+.quickAmounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(15, 106, 69, 0.1);
+  color: var(--green);
+  font-weight: 600;
+}
+
+.chip.is-active {
+  background: var(--green);
+  color: white;
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.key {
+  min-height: 64px;
+  border-radius: 16px;
+  background: #10231a;
+  color: #f7f2e4;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 700;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.key:active {
+  transform: scale(0.97);
+  background: #1a3a2b;
+}
+
+.key--mute {
+  background: rgba(16, 35, 26, 0.12);
+  color: var(--ink);
+  font-size: 1.2rem;
+}
+
+.sellBtn {
+  width: 100%;
+  min-height: 64px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #efc24a, #d4a017 55%, #b8860b);
+  color: #2a1c00;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  box-shadow: 0 12px 28px rgba(212, 160, 23, 0.35);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.sellBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.sellBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 0 0 10px;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.summaryStrip,
+.receipt,
+.history {
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.summaryStrip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 14px;
+}
+
+.summaryStrip span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.summaryStrip strong {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.receipt {
+  padding: 18px;
+  min-height: 210px;
+}
+
+.receipt.is-visible {
+  animation: ticketIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes ticketIn {
+  from {
+    transform: translateY(12px) scale(0.98);
+    opacity: 0.2;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.receiptHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px dashed var(--line);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.receiptHead p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.receiptGame {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.receiptNums {
+  margin: 8px 0 4px;
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.receiptAmt {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.receiptMeta {
+  margin: 8px 0 14px;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.receiptEmpty {
+  margin: 40px 0;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.receiptActions,
+.histRight {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.receiptActions button,
+.history button,
+.ghost {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(15, 106, 69, 0.12);
+  color: var(--green);
+  font-weight: 600;
+}
+
+.receiptActions .danger,
+.histRight button {
+  background: rgba(180, 35, 24, 0.1);
+  color: var(--danger);
+}
+
+.history {
+  padding: 14px;
+}
+
+.historyHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.historyHead h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+
+.ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
+.history ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 340px;
+  overflow: auto;
+}
+
+.history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.history li strong,
+.history li em {
+  display: block;
+  font-style: normal;
+}
+
+.history li span {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.history li.is-void {
+  opacity: 0.55;
+}
+
+.voidTag,
+.empty {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 960px) {
+  .stage {
+    grid-template-columns: 1fr;
+  }
+
+  .history ul {
+    max-height: 260px;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell {
+    padding: 12px;
+  }
+
+  .brandName {
+    font-size: 1.55rem;
+  }
+
+  .gameTab span {
+    font-size: 1rem;
+  }
+
+  .gameTab small {
+    display: none;
+  }
+
+  .pick {
+    min-height: 72px;
+  }
+
+  .key {
+    min-height: 56px;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .receipt,
+  .receipt * {
+    visibility: visible;
+  }
+
+  .receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+    border: 0;
+    background: white;
+  }
+
+  .receiptActions {
+    display: none;
+  }
+}
