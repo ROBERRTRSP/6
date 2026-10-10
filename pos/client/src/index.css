@@ -48,6 +48,7 @@ button {
 .atmosphere {
   position: fixed;
   inset: 0;
+  pointer-events: none;
   background:
     radial-gradient(ellipse 80% 60% at 10% 0%, rgba(212, 160, 23, 0.28), transparent 55%),
     radial-gradient(ellipse 70% 50% at 90% 10%, rgba(46, 168, 110, 0.35), transparent 50%),

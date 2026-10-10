@@ -135,6 +135,36 @@ export function App() {
     }
   }
 
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        return;
+      }
+      if (event.key >= "0" && event.key <= "9") {
+        event.preventDefault();
+        pushDigit(event.key);
+        return;
+      }
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        backspace();
+        return;
+      }
+      if (event.key === "Escape" || event.key.toLowerCase() === "c") {
+        event.preventDefault();
+        clearEntry();
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        void onSell();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
+
   async function onVoid(id: string) {
     if (!window.confirm("¿Anular este ticket?")) return;
     setBusy(true);
