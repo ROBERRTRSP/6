@@ -1,11 +1,17 @@
-# Banca Rápida · POS de lotería
+# Banca Rápida · POS de lotería dominicana
 
-POS simple para venta de jugadas de lotería (Quiniela, Pale y Tripleta).
+POS simple para venta de jugadas de lotería dominicana.
 
 ## Qué incluye
 
-- Venta táctil con teclado numérico
-- Juegos: Quiniela (1 número), Pale (2), Tripleta (3)
+- Venta táctil con teclado numérico y teclado físico
+- Juegos:
+  - **Quiniela** — 2 dígitos (00–99)
+  - **Pale** — 4 dígitos (dos números)
+  - **Tripleta** — 6 dígitos (tres números)
+  - **Súper Pale** — dos números entre loterías
+  - **Pick 3** — Straight / Box / Straight + Box
+  - **Pick 4** — Straight / Box / Straight + Box
 - Montos rápidos y monto libre
 - Ticket imprimible del último sale
 - Historial y resumen del día
@@ -38,5 +44,5 @@ npm start
 | GET | `/api/health` | Salud del servicio |
 | GET | `/api/summary` | Resumen del día |
 | GET | `/api/tickets` | Tickets del día |
-| POST | `/api/tickets` | Vender ticket `{ game, numbers, amountCents }` |
+| POST | `/api/tickets` | Vender `{ game, betMode?, numbers, amountCents }` |
 | POST | `/api/tickets/:id/void` | Anular ticket |

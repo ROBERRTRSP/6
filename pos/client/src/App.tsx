@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchSummary, fetchTickets, sellTicket, voidTicket } from "./api";
-import type { DailySummary, GameType, Ticket } from "./types";
-
-const GAMES: Array<{ id: GameType; label: string; picks: number; hint: string }> = [
-  { id: "quiniela", label: "Quiniela", picks: 1, hint: "1 número · 00–99" },
-  { id: "pale", label: "Pale", picks: 2, hint: "2 números · 00–99" },
-  { id: "tripleta", label: "Tripleta", picks: 3, hint: "3 números · 00–99" },
-];
+import { formatTicketLine, gameLabel, getGame, GAMES, modeLabel } from "./games";
+import type { BetMode, DailySummary, GameType, Ticket } from "./types";
 
 const QUICK_AMOUNTS = [25, 50, 100, 200, 500] as const;
+const MODES: Array<{ id: BetMode; label: string }> = [
+  { id: "straight", label: "Straight" },
+  { id: "box", label: "Box" },
+  { id: "straight_box", label: "Straight + Box" },
+];
 
 function money(cents: number) {
   return new Intl.NumberFormat("es-DO", {
@@ -27,12 +27,13 @@ function clockLabel(ts: number) {
   }).format(ts);
 }
 
-function gameLabel(game: GameType) {
-  return GAMES.find((g) => g.id === game)?.label ?? game;
+function formatNumbers(game: GameType, numbers: string[]) {
+  return getGame(game).kind === "digit1" ? numbers.join(" ") : numbers.join(" · ");
 }
 
 export function App() {
   const [game, setGame] = useState<GameType>("quiniela");
+  const [betMode, setBetMode] = useState<BetMode>("straight");
   const [digits, setDigits] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
   const [amount, setAmount] = useState("25");
@@ -46,7 +47,8 @@ export function App() {
   const [now, setNow] = useState(Date.now());
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  const picksNeeded = GAMES.find((g) => g.id === game)!.picks;
+  const gameDef = getGame(game);
+  const picksNeeded = gameDef.picks;
   const amountCents = Math.round((Number(amount) || 0) * 100);
   const canSell = picked.length === picksNeeded && amountCents >= 100 && !busy;
 
@@ -67,12 +69,14 @@ export function App() {
     setPicked([]);
     setAmountMode(false);
     setError(null);
-  }, [game]);
+    if (gameDef.modes) setBetMode("straight");
+  }, [game, gameDef.modes]);
 
   const liveNumber = useMemo(() => {
+    if (gameDef.kind === "digit1") return digits || "-";
     if (!digits) return "--";
     return digits.padStart(2, "0");
-  }, [digits]);
+  }, [digits, gameDef.kind]);
 
   function pushDigit(d: string) {
     setError(null);
@@ -84,6 +88,13 @@ export function App() {
       return;
     }
     if (picked.length >= picksNeeded) return;
+
+    if (gameDef.kind === "digit1") {
+      setPicked((prev) => [...prev, d]);
+      setDigits("");
+      return;
+    }
+
     const next = `${digits}${d}`.slice(0, 2);
     setDigits(next);
     if (next.length === 2) {
@@ -119,6 +130,7 @@ export function App() {
     try {
       const ticket = await sellTicket({
         game,
+        betMode: gameDef.modes ? betMode : null,
         numbers: picked,
         amountCents,
       });
@@ -192,7 +204,7 @@ export function App() {
           <span className="brandMark">BR</span>
           <div>
             <p className="brandName">Banca Rápida</p>
-            <p className="brandTag">POS de lotería</p>
+            <p className="brandTag">Lotería dominicana · POS</p>
           </div>
         </div>
         <div className="topMeta">
@@ -219,12 +231,27 @@ export function App() {
             ))}
           </div>
 
+          {gameDef.modes ? (
+            <div className="modeRow" role="group" aria-label="Modalidad">
+              {MODES.map((mode) => (
+                <button
+                  key={mode.id}
+                  type="button"
+                  className={betMode === mode.id ? "modeChip is-active" : "modeChip"}
+                  onClick={() => setBetMode(mode.id)}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
           <div className="ticketBoard">
             <p className="boardLabel">{amountMode ? "Monto de la jugada" : "Números jugados"}</p>
-            <div className="picks">
+            <div className={`picks picks--${picksNeeded}`}>
               {Array.from({ length: picksNeeded }).map((_, index) => (
                 <div key={index} className={`pick ${picked[index] ? "is-filled" : index === picked.length ? "is-current" : ""}`}>
-                  {picked[index] ?? (index === picked.length ? liveNumber : "--")}
+                  {picked[index] ?? (index === picked.length ? liveNumber : gameDef.kind === "digit1" ? "-" : "--")}
                 </div>
               ))}
             </div>
@@ -260,7 +287,7 @@ export function App() {
               <button
                 key={key}
                 type="button"
-                className={`key ${key === "C" ? "key--mute" : ""} ${key === "⌫" ? "key--mute" : ""}`}
+                className={`key ${key === "C" || key === "⌫" ? "key--mute" : ""}`}
                 onClick={() => {
                   if (key === "C") clearEntry();
                   else if (key === "⌫") backspace();
@@ -275,7 +302,9 @@ export function App() {
           {error ? <p className="error">{error}</p> : null}
 
           <button type="button" className="sellBtn" disabled={!canSell} onClick={() => void onSell()}>
-            {busy ? "Procesando…" : `Vender · ${money(amountCents)}`}
+            {busy
+              ? "Procesando…"
+              : `Vender ${gameDef.modes ? modeLabel(betMode) + " · " : ""}${money(amountCents)}`}
           </button>
         </section>
 
@@ -302,8 +331,11 @@ export function App() {
                   <p>Banca Rápida</p>
                   <span>#{lastTicket.ticketNumber}</span>
                 </div>
-                <p className="receiptGame">{gameLabel(lastTicket.game)}</p>
-                <p className="receiptNums">{lastTicket.numbers.join(" · ")}</p>
+                <p className="receiptGame">
+                  {gameLabel(lastTicket.game)}
+                  {lastTicket.betMode ? ` · ${modeLabel(lastTicket.betMode)}` : ""}
+                </p>
+                <p className="receiptNums">{formatNumbers(lastTicket.game, lastTicket.numbers)}</p>
                 <p className="receiptAmt">{money(lastTicket.amountCents)}</p>
                 <p className="receiptMeta">
                   {new Date(lastTicket.createdAt).toLocaleString("es-DO")}
@@ -337,9 +369,7 @@ export function App() {
               {tickets.map((ticket) => (
                 <li key={ticket.id} className={ticket.status === "void" ? "is-void" : ""}>
                   <div>
-                    <strong>
-                      {gameLabel(ticket.game)} · {ticket.numbers.join("-")}
-                    </strong>
+                    <strong>{formatTicketLine(ticket.game, ticket.numbers, ticket.betMode)}</strong>
                     <span>
                       #{ticket.ticketNumber} · {clockLabel(ticket.createdAt)}
                     </span>

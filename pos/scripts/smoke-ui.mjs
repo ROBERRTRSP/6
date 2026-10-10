@@ -11,41 +11,36 @@ const browser = await chromium.launch({
   args: ["--no-sandbox", "--disable-dev-shm-usage"],
 });
 
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 await page.goto("http://localhost:5174/", { waitUntil: "networkidle" });
 await page.getByText("Banca Rápida").first().waitFor();
+await page.screenshot({ path: path.join(outDir, "pos-do-games.png"), fullPage: true });
 
-await page.screenshot({ path: path.join(outDir, "pos-initial.png"), fullPage: true });
-
-// Quiniela 23 @ RD$50
-await page.getByRole("tab", { name: /Quiniela/i }).click();
-await page.getByRole("button", { name: "2", exact: true }).click();
-await page.getByRole("button", { name: "3", exact: true }).click();
-await page.getByRole("button", { name: "RD$50", exact: true }).click();
-await page.getByRole("button", { name: /Vender/ }).click();
-await page.locator(".receiptNums").filter({ hasText: "23" }).waitFor({ timeout: 5000 });
-await page.screenshot({ path: path.join(outDir, "pos-quiniela-sold.png"), fullPage: true });
-
-// Pale 12-45
-await page.getByRole("tab", { name: /Pale/i }).click();
-await page.getByRole("button", { name: "1", exact: true }).click();
-await page.getByRole("button", { name: "2", exact: true }).click();
-await page.getByRole("button", { name: "4", exact: true }).click();
-await page.getByRole("button", { name: "5", exact: true }).click();
-await page.getByRole("button", { name: /Vender/ }).click();
-await page.locator(".receiptNums").filter({ hasText: "12 · 45" }).waitFor({ timeout: 5000 });
-await page.screenshot({ path: path.join(outDir, "pos-pale-sold.png"), fullPage: true });
-
-// Tripleta 01-08-99
-await page.getByRole("tab", { name: /Tripleta/i }).click();
-for (const d of ["0", "1", "0", "8", "9", "9"]) {
-  await page.getByRole("button", { name: d, exact: true }).click();
+async function sellBall(tab, digits, amountLabel, receiptText) {
+  await page.getByRole("tab", { name: new RegExp(tab, "i") }).click();
+  for (const d of digits) {
+    await page.getByRole("button", { name: d, exact: true }).click();
+  }
+  if (amountLabel) await page.getByRole("button", { name: amountLabel, exact: true }).click();
+  await page.getByRole("button", { name: /Vender/ }).click();
+  await page.locator(".receiptNums").filter({ hasText: receiptText }).waitFor({ timeout: 5000 });
 }
-await page.getByRole("button", { name: "RD$100", exact: true }).click();
-await page.getByRole("button", { name: /Vender/ }).click();
-await page.locator(".receiptNums").filter({ hasText: "01 · 08 · 99" }).waitFor({ timeout: 5000 });
-await page.screenshot({ path: path.join(outDir, "pos-tripleta-sold.png"), fullPage: true });
-const summaryText = await page.locator(".summaryStrip").innerText();
-console.log("SUMMARY:\n" + summaryText);
+
+async function sellPick(tab, mode, digits, receiptText) {
+  await page.getByRole("tab", { name: new RegExp(tab, "i") }).click();
+  await page.getByRole("button", { name: mode, exact: true }).click();
+  for (const d of digits) {
+    await page.getByRole("button", { name: d, exact: true }).click();
+  }
+  await page.getByRole("button", { name: /Vender/ }).click();
+  await page.locator(".receiptNums").filter({ hasText: receiptText }).waitFor({ timeout: 5000 });
+}
+
+await sellBall("Quiniela", ["2", "3"], "RD$50", "23");
+await sellBall("Súper Pale", ["1", "2", "4", "5"], null, "12 · 45");
+await sellPick("Pick 3", "Box", ["1", "2", "3"], "1 2 3");
+await sellPick("Pick 4", "Straight", ["9", "8", "7", "6"], "9 8 7 6");
+await page.screenshot({ path: path.join(outDir, "pos-do-pick4-sold.png"), fullPage: true });
+
 console.log("SMOKE_OK");
 await browser.close();

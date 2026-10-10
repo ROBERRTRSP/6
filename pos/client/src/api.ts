@@ -1,4 +1,4 @@
-import type { DailySummary, GameType, Ticket } from "./types";
+import type { BetMode, DailySummary, GameType, Ticket } from "./types";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -24,7 +24,12 @@ export function fetchTickets(limit = 40) {
   return request<{ tickets: Ticket[] }>(`/api/tickets?limit=${limit}`);
 }
 
-export function sellTicket(input: { game: GameType; numbers: string[]; amountCents: number }) {
+export function sellTicket(input: {
+  game: GameType;
+  betMode?: BetMode | null;
+  numbers: string[];
+  amountCents: number;
+}) {
   return request<Ticket>("/api/tickets", {
     method: "POST",
     body: JSON.stringify(input),

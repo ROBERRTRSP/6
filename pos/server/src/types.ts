@@ -1,4 +1,6 @@
-export type GameType = "quiniela" | "pale" | "tripleta";
+export type GameType = "quiniela" | "pale" | "tripleta" | "super_pale" | "pick3" | "pick4";
+
+export type BetMode = "straight" | "box" | "straight_box";
 
 export type TicketStatus = "sold" | "void";
 
@@ -6,6 +8,7 @@ export type Ticket = {
   id: string;
   ticketNumber: string;
   game: GameType;
+  betMode: BetMode | null;
   numbers: string[];
   amountCents: number;
   status: TicketStatus;
@@ -25,6 +28,7 @@ export type DailySummary = {
 
 export type CreateTicketInput = {
   game: GameType;
+  betMode?: BetMode | null;
   numbers: string[];
   amountCents: number;
 };

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Db } from "../db.js";
 import { createTicket, getDailySummary, getTicket, listTickets, voidTicket } from "../db.js";
-import type { CreateTicketInput, GameType } from "../types.js";
+import type { BetMode, CreateTicketInput, GameType } from "../types.js";
 
 function parseLimit(value: unknown) {
   const n = Number(value ?? 50);
@@ -39,6 +39,7 @@ export function createApiRouter(db: Db) {
       const body = req.body as Partial<CreateTicketInput>;
       const ticket = createTicket(db, {
         game: body.game as GameType,
+        betMode: (body.betMode as BetMode | null | undefined) ?? null,
         numbers: Array.isArray(body.numbers) ? body.numbers.map(String) : [],
         amountCents: Number(body.amountCents),
       });

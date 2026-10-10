@@ -2,18 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { customAlphabet } from "nanoid";
-import type { CreateTicketInput, DailySummary, GameType, Ticket } from "./types.js";
+import { emptyByGame, GAME_IDS, getGame } from "./games.js";
+import type { BetMode, CreateTicketInput, DailySummary, GameType, Ticket } from "./types.js";
 
 export type Db = Database.Database;
 
 const ticketId = customAlphabet("23456789ABCDEFGHJKLMNPQRSTUVWXYZ", 10);
 const ticketSerial = customAlphabet("0123456789", 6);
-
-const GAME_NUMBERS: Record<GameType, number> = {
-  quiniela: 1,
-  pale: 2,
-  tripleta: 3,
-};
 
 function todayKey(ts = Date.now()) {
   return new Date(ts).toISOString().slice(0, 10);
@@ -31,6 +26,7 @@ function mapTicket(row: {
   id: string;
   ticket_number: string;
   game: string;
+  bet_mode: string | null;
   numbers_json: string;
   amount_cents: number;
   status: string;
@@ -41,6 +37,7 @@ function mapTicket(row: {
     id: row.id,
     ticketNumber: row.ticket_number,
     game: row.game as GameType,
+    betMode: (row.bet_mode as BetMode | null) ?? null,
     numbers: JSON.parse(row.numbers_json) as string[],
     amountCents: row.amount_cents,
     status: row.status as Ticket["status"],
@@ -58,6 +55,7 @@ export function openDb(databasePath: string): Db {
       id TEXT PRIMARY KEY,
       ticket_number TEXT NOT NULL UNIQUE,
       game TEXT NOT NULL,
+      bet_mode TEXT,
       numbers_json TEXT NOT NULL,
       amount_cents INTEGER NOT NULL,
       status TEXT NOT NULL,
@@ -67,16 +65,29 @@ export function openDb(databasePath: string): Db {
     CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at);
     CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
   `);
+
+  const cols = db.prepare(`PRAGMA table_info(tickets)`).all() as Array<{ name: string }>;
+  if (!cols.some((c) => c.name === "bet_mode")) {
+    db.exec(`ALTER TABLE tickets ADD COLUMN bet_mode TEXT`);
+  }
+
   return db;
 }
 
 export function normalizeNumbers(game: GameType, numbers: string[]): string[] {
-  const expected = GAME_NUMBERS[game];
-  if (!Array.isArray(numbers) || numbers.length !== expected) {
-    throw new Error(`Este juego requiere ${expected} número(s).`);
+  const def = getGame(game);
+  if (!Array.isArray(numbers) || numbers.length !== def.picks) {
+    throw new Error(`Este juego requiere ${def.picks} número(s).`);
   }
+
   return numbers.map((raw, index) => {
     const value = String(raw ?? "").trim();
+    if (def.kind === "digit1") {
+      if (!/^\d$/.test(value)) {
+        throw new Error(`Dígito ${index + 1} inválido (0–9).`);
+      }
+      return value;
+    }
     if (!/^\d{1,2}$/.test(value)) {
       throw new Error(`Número ${index + 1} inválido.`);
     }
@@ -88,8 +99,21 @@ export function normalizeNumbers(game: GameType, numbers: string[]): string[] {
   });
 }
 
+function normalizeMode(game: GameType, mode: BetMode | null | undefined): BetMode | null {
+  const def = getGame(game);
+  if (!def.modes) {
+    if (mode) throw new Error("Este juego no usa modalidad Straight/Box.");
+    return null;
+  }
+  const resolved = mode ?? "straight";
+  if (!def.modes.includes(resolved)) {
+    throw new Error("Modalidad inválida. Use Straight, Box o Straight + Box.");
+  }
+  return resolved;
+}
+
 export function createTicket(db: Db, input: CreateTicketInput): Ticket {
-  if (!["quiniela", "pale", "tripleta"].includes(input.game)) {
+  if (!GAME_IDS.includes(input.game)) {
     throw new Error("Juego no soportado.");
   }
   const amountCents = Math.trunc(Number(input.amountCents));
@@ -101,11 +125,13 @@ export function createTicket(db: Db, input: CreateTicketInput): Ticket {
   }
 
   const numbers = normalizeNumbers(input.game, input.numbers);
+  const betMode = normalizeMode(input.game, input.betMode);
   const now = Date.now();
   const ticket: Ticket = {
     id: ticketId(),
     ticketNumber: `${todayKey().replaceAll("-", "").slice(2)}${ticketSerial()}`,
     game: input.game,
+    betMode,
     numbers,
     amountCents,
     status: "sold",
@@ -114,12 +140,13 @@ export function createTicket(db: Db, input: CreateTicketInput): Ticket {
   };
 
   db.prepare(
-    `INSERT INTO tickets (id, ticket_number, game, numbers_json, amount_cents, status, created_at, voided_at)
-     VALUES (@id, @ticketNumber, @game, @numbersJson, @amountCents, @status, @createdAt, @voidedAt)`
+    `INSERT INTO tickets (id, ticket_number, game, bet_mode, numbers_json, amount_cents, status, created_at, voided_at)
+     VALUES (@id, @ticketNumber, @game, @betMode, @numbersJson, @amountCents, @status, @createdAt, @voidedAt)`
   ).run({
     id: ticket.id,
     ticketNumber: ticket.ticketNumber,
     game: ticket.game,
+    betMode: ticket.betMode,
     numbersJson: JSON.stringify(ticket.numbers),
     amountCents: ticket.amountCents,
     status: ticket.status,
@@ -142,6 +169,7 @@ export function listTickets(db: Db, limit = 50, date = todayKey()): Ticket[] {
     id: string;
     ticket_number: string;
     game: string;
+    bet_mode: string | null;
     numbers_json: string;
     amount_cents: number;
     status: string;
@@ -157,6 +185,7 @@ export function getTicket(db: Db, id: string): Ticket | null {
         id: string;
         ticket_number: string;
         game: string;
+        bet_mode: string | null;
         numbers_json: string;
         amount_cents: number;
         status: string;
@@ -192,12 +221,7 @@ export function getDailySummary(db: Db, date = todayKey()): DailySummary {
     amount_cents: number;
   }>;
 
-  const byGame: DailySummary["byGame"] = {
-    quiniela: { count: 0, amountCents: 0 },
-    pale: { count: 0, amountCents: 0 },
-    tripleta: { count: 0, amountCents: 0 },
-  };
-
+  const byGame = emptyByGame();
   let soldCount = 0;
   let voidCount = 0;
   let soldAmountCents = 0;
@@ -207,8 +231,10 @@ export function getDailySummary(db: Db, date = todayKey()): DailySummary {
     if (row.status === "sold") {
       soldCount += row.count;
       soldAmountCents += row.amount_cents;
-      byGame[row.game].count += row.count;
-      byGame[row.game].amountCents += row.amount_cents;
+      if (byGame[row.game]) {
+        byGame[row.game].count += row.count;
+        byGame[row.game].amountCents += row.amount_cents;
+      }
     } else {
       voidCount += row.count;
       voidAmountCents += row.amount_cents;
