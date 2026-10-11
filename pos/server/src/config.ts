@@ -13,9 +13,9 @@ function resolveDatabasePath() {
       : path.resolve(root, process.env.DATABASE_PATH);
   }
   if (process.env.VERCEL) {
-    return path.join("/tmp", "loteria-pos.db");
+    return path.join("/tmp", "pos-simple.db");
   }
-  return path.join(root, "server/data/loteria-pos.db");
+  return path.join(root, "server/data/pos-simple.db");
 }
 
 export const config = {

@@ -1,5 +1,5 @@
 {
-  "name": "loteria-pos-server",
+  "name": "pos-simple-server",
   "private": true,
   "type": "module",
   "scripts": {

@@ -6,7 +6,7 @@ import { openDb } from "../server/src/db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const posRoot = path.resolve(__dirname, "..");
-const databasePath = process.env.DATABASE_PATH ?? (process.env.VERCEL ? "/tmp/loteria-pos.db" : path.join(posRoot, "server/data/loteria-pos.db"));
+const databasePath = process.env.DATABASE_PATH ?? (process.env.VERCEL ? "/tmp/pos-simple.db" : path.join(posRoot, "server/data/pos-simple.db"));
 
 const db = openDb(databasePath);
 const app: express.Express = createApp(db, { serveClient: false });

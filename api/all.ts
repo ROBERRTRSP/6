@@ -1,5 +1,5 @@
 /**
- * Vercel serverless entry that mounts the Banca Rápida POS Express API.
+ * Vercel serverless entry that mounts the POS Simple Express API.
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,7 +13,7 @@ const posRoot = path.resolve(__dirname, "..", "pos");
 
 const databasePath =
   process.env.DATABASE_PATH ??
-  (process.env.VERCEL ? "/tmp/loteria-pos.db" : path.join(posRoot, "server/data/loteria-pos.db"));
+  (process.env.VERCEL ? "/tmp/pos-simple.db" : path.join(posRoot, "server/data/pos-simple.db"));
 
 const db = openDb(databasePath);
 const app: express.Express = createApp(db, { serveClient: false });

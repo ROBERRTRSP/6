@@ -12,7 +12,7 @@ export function createApiRouter(db: Db) {
   const router = Router();
 
   router.get("/health", (_req, res) => {
-    res.json({ ok: true, service: "loteria-pos", now: Date.now() });
+    res.json({ ok: true, service: "pos-simple", now: Date.now() });
   });
 
   router.get("/summary", (req, res) => {

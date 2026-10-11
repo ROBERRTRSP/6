@@ -6,8 +6,8 @@ export default function handler(_req: IncomingMessage, res: ServerResponse) {
   res.end(
     JSON.stringify({
       ok: true,
-      service: "loteria-pos",
-      name: "Banca Rápida",
+      service: "pos-simple",
+      name: "POS Simple",
       check: "vercel-functions",
       runtime: "node",
       now: Date.now(),

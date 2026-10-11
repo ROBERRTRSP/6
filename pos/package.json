@@ -1,5 +1,5 @@
 {
-  "name": "loteria-pos",
+  "name": "pos-simple",
   "private": true,
   "type": "module",
   "workspaces": [

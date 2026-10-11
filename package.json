@@ -1,5 +1,5 @@
 {
-  "name": "loteria-pos-vercel-root",
+  "name": "pos-simple",
   "private": true,
   "type": "module",
   "workspaces": ["pos/client", "pos/server"],
@@ -12,7 +12,7 @@
     "nanoid": "^5.0.9"
   },
   "scripts": {
-    "build": "npm run build -w loteria-pos-client && npm run build -w loteria-pos-server",
+    "build": "npm run build -w pos-simple-client && npm run build -w pos-simple-server",
     "dev": "npm run dev --prefix pos"
   },
   "devDependencies": {

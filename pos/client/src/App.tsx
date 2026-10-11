@@ -201,10 +201,10 @@ export function App() {
 
       <header className="topbar">
         <div className="brand">
-          <span className="brandMark">BR</span>
+          <span className="brandMark">PS</span>
           <div>
-            <p className="brandName">Banca Rápida</p>
-            <p className="brandTag">Lotería dominicana · POS</p>
+            <p className="brandName">POS Simple</p>
+            <p className="brandTag">Lotería dominicana</p>
           </div>
         </div>
         <div className="topMeta">
@@ -328,7 +328,7 @@ export function App() {
             {lastTicket ? (
               <>
                 <div className="receiptHead">
-                  <p>Banca Rápida</p>
+                  <p>POS Simple</p>
                   <span>#{lastTicket.ticketNumber}</span>
                 </div>
                 <p className="receiptGame">
