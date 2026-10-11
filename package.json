@@ -1,19 +1,19 @@
 {
-  "name": "lucky-six-vercel-root",
+  "name": "loteria-pos-vercel-root",
   "private": true,
   "type": "module",
-  "workspaces": ["6/client", "6/server"],
+  "workspaces": ["pos/client", "pos/server"],
   "dependencies": {
     "@types/express": "^5.0.0",
     "better-sqlite3": "^11.7.0",
-    "cookie-session": "^2.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "nanoid": "^5.0.9"
   },
   "scripts": {
-    "build": "npm run build -w client && npm run build -w server"
+    "build": "npm run build -w loteria-pos-client && npm run build -w loteria-pos-server",
+    "dev": "npm run dev --prefix pos"
   },
   "devDependencies": {
     "typescript": "~5.7.3"

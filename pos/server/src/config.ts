@@ -6,11 +6,21 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
 dotenv.config({ path: path.join(root, ".env") });
 
+function resolveDatabasePath() {
+  if (process.env.DATABASE_PATH) {
+    return path.isAbsolute(process.env.DATABASE_PATH)
+      ? process.env.DATABASE_PATH
+      : path.resolve(root, process.env.DATABASE_PATH);
+  }
+  if (process.env.VERCEL) {
+    return path.join("/tmp", "loteria-pos.db");
+  }
+  return path.join(root, "server/data/loteria-pos.db");
+}
+
 export const config = {
   port: Number(process.env.PORT ?? 43880),
   nodeEnv: process.env.NODE_ENV ?? "development",
-  databasePath: process.env.DATABASE_PATH
-    ? path.resolve(root, process.env.DATABASE_PATH)
-    : path.join(root, "server/data/loteria-pos.db"),
+  databasePath: resolveDatabasePath(),
   corsOrigin: process.env.CORS_ORIGIN ?? "*",
 };

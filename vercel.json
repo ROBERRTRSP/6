@@ -1,6 +1,6 @@
 {
   "installCommand": "npm ci || npm install",
-  "buildCommand": "npm run build && if [ -n \"$VERCEL\" ] && [ \"$VERCEL_ENV\" != \"development\" ]; then rm -rf public && mkdir -p public && cp -r 6/client/dist/. public/; fi",
+  "buildCommand": "npm run build && if [ -n \"$VERCEL\" ] && [ \"$VERCEL_ENV\" != \"development\" ]; then rm -rf public && mkdir -p public && cp -r pos/client/dist/. public/; fi",
   "rewrites": [
     {
       "source": "/api/health",
